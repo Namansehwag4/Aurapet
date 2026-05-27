@@ -1,0 +1,12 @@
+{
+  "name": "aurapet",
+  "version": "1.0.0",
+  "description": "Premium Smart Pet Wellbeing Ecosystem",
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "nodemon server/server.js",
+    "client": "python3 -m http.server 8000 --directory client"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
