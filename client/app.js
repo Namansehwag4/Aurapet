@@ -129,40 +129,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const API_URL = 'http://localhost:5000/api';
+
   // Calculate customized nutrition routine
   if (calculatePlanBtn) {
-    calculatePlanBtn.addEventListener('click', () => {
+    calculatePlanBtn.addEventListener('click', async () => {
       const petType = document.querySelector('input[name="petType"]:checked').value;
       const petBreed = document.getElementById('petBreed').value || 'Companion';
       const petAge = document.getElementById('petAge').value;
       const petActivity = document.querySelector('input[name="petActivity"]:checked').value;
       const petWeight = parseFloat(weightSlider.value);
 
-      // 1. Dynamic Calorie Math (Resting Energy Requirement RER = 70 * weight^0.75)
+      // Perform API call to backend calculator (with local fallback if server is offline)
+      try {
+        const response = await fetch(`${API_URL}/pets/calculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: petType, ageGroup: petAge, activityLevel: petActivity, weight: petWeight })
+        });
+
+        const resData = await response.json();
+        
+        if (resData.success) {
+          const metrics = resData.data;
+          document.getElementById('rCalories').textContent = `${metrics.caloricTarget} kcal`;
+          document.getElementById('rFeedings').textContent = `${metrics.dailyPortions} Meals`;
+          document.getElementById('rMeal').textContent = metrics.recommendedMeal;
+          document.getElementById('rPlanName').textContent = metrics.planName;
+          document.getElementById('rPlanPrice').textContent = `₹${metrics.planPrice.toLocaleString('en-IN')}`;
+          return;
+        }
+      } catch (err) {
+        console.warn('Backend server offline. Performing local calculations fallback.', err);
+      }
+
+      // Local Calculation Fallback: Runs identical math client-side
       const baseRER = 70 * Math.pow(petWeight, 0.75);
       let activityMultiplier = 1.0;
-
       if (petType === 'cat') {
         activityMultiplier = petActivity === 'low' ? 1.0 : petActivity === 'moderate' ? 1.2 : 1.4;
       } else {
         activityMultiplier = petActivity === 'low' ? 1.2 : petActivity === 'moderate' ? 1.6 : 2.0;
       }
-
-      // Age correction multiplier
       if (petAge === 'puppy') activityMultiplier *= 1.5;
       if (petAge === 'senior') activityMultiplier *= 0.8;
 
       const calculatedCalories = Math.round(baseRER * activityMultiplier);
-
-      // 2. Portion Distribution
       let dailyPortions = 3;
-      if (petWeight < 8) {
-        dailyPortions = 2;
-      } else if (petWeight >= 30) {
-        dailyPortions = 4;
-      }
+      if (petWeight < 8) dailyPortions = 2;
+      else if (petWeight >= 30) dailyPortions = 4;
 
-      // 3. Recommended Plan Logic
       let planName = 'Aura Essential';
       let planPrice = 999;
       let recommendedMeal = 'Aura Fit-Mix';
@@ -187,12 +203,114 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Display dynamic calculations in final step card
       document.getElementById('rCalories').textContent = `${calculatedCalories} kcal`;
       document.getElementById('rFeedings').textContent = `${dailyPortions} Meals`;
       document.getElementById('rMeal').textContent = recommendedMeal;
       document.getElementById('rPlanName').textContent = planName;
       document.getElementById('rPlanPrice').textContent = `₹${planPrice.toLocaleString('en-IN')}`;
+    });
+  }
+
+  // Handle final registration & profile submission
+  const claimPlanBtn = document.getElementById('claimPlanBtn');
+  if (claimPlanBtn) {
+    claimPlanBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      const errorMsgContainer = document.getElementById('quizErrorMsg');
+      errorMsgContainer.style.display = 'none';
+
+      // Inputs from registration form
+      const regName = document.getElementById('regName').value.trim();
+      const regEmail = document.getElementById('regEmail').value.trim();
+      const regPassword = document.getElementById('regPassword').value;
+
+      // Inputs from pet form
+      const petName = document.getElementById('petName').value.trim();
+      const petType = document.querySelector('input[name="petType"]:checked').value;
+      const petBreed = document.getElementById('petBreed').value.trim() || 'Companion';
+      const petAge = document.getElementById('petAge').value;
+      const petActivity = document.querySelector('input[name="petActivity"]:checked').value;
+      const petWeight = parseFloat(weightSlider.value);
+
+      // Client-side validations
+      if (!petName) {
+        errorMsgContainer.textContent = 'Please fill out your Pet\'s Name in Step 1.';
+        errorMsgContainer.style.display = 'block';
+        return;
+      }
+      if (!regName || !regEmail || !regPassword) {
+        errorMsgContainer.textContent = 'Please provide your Name, Email, and Password.';
+        errorMsgContainer.style.display = 'block';
+        return;
+      }
+      if (regPassword.length < 6) {
+        errorMsgContainer.textContent = 'Password must be at least 6 characters.';
+        errorMsgContainer.style.display = 'block';
+        return;
+      }
+
+      // Disable button during requests
+      claimPlanBtn.disabled = true;
+      claimPlanBtn.textContent = 'Creating Account...';
+
+      try {
+        // Step 1: Register User Account
+        const regResponse = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: regName, email: regEmail, password: regPassword })
+        });
+        
+        const regData = await regResponse.json();
+
+        if (!regData.success) {
+          throw new Error(regData.error || 'Registration failed.');
+        }
+
+        // Save token to session storage
+        sessionStorage.setItem('token', regData.token);
+        sessionStorage.setItem('userName', regData.user.name);
+
+        claimPlanBtn.textContent = 'Saving Pet Profile...';
+
+        // Step 2: Register Pet Profile
+        const petResponse = await fetch(`${API_URL}/pets`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${regData.token}`
+          },
+          body: JSON.stringify({
+            name: petName,
+            type: petType,
+            breed: petBreed,
+            ageGroup: petAge,
+            activityLevel: petActivity,
+            weight: petWeight
+          })
+        });
+
+        const petData = await petResponse.json();
+
+        if (!petData.success) {
+          throw new Error(petData.error || 'Failed to save pet profile.');
+        }
+
+        // Save active pet ID
+        sessionStorage.setItem('activePetId', petData.data._id);
+        
+        // Success redirect
+        alert('Welcome to AuraPet! Redirecting to your dashboard...');
+        window.location.href = 'dashboard.html';
+
+      } catch (err) {
+        console.error(err);
+        errorMsgContainer.textContent = err.message || 'An error occurred during account creation. Please try again.';
+        errorMsgContainer.style.display = 'block';
+        claimPlanBtn.disabled = false;
+        claimPlanBtn.textContent = 'Save Profile & Open Dashboard';
+      }
     });
   }
 

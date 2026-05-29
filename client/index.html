@@ -218,6 +218,10 @@
               </label>
             </div>
             <div class="input-group">
+              <label for="petName" class="input-label">What is their Name?</label>
+              <input type="text" id="petName" placeholder="e.g., Milo, Luna" class="form-input" required>
+            </div>
+            <div class="input-group">
               <label for="petBreed" class="input-label">What is their Breed?</label>
               <input type="text" id="petBreed" placeholder="e.g., Golden Retriever, Siamese" class="form-input" required>
             </div>
@@ -327,10 +331,29 @@
               </ul>
             </div>
 
-            <div class="step-actions flex-col">
-              <button class="btn btn-primary w-full" onclick="alert('Plan Claimed! Our team will reach out shortly.')">Order AuraHub Kit</button>
+            <!-- Create Account Section to save routine -->
+            <div class="quiz-signup-form" id="quizSignupForm" style="margin-top: 24px; border-top: 1px solid rgba(23,23,23,0.06); padding-top: 24px;">
+              <h4 style="margin-bottom: 16px; font-size: 1.1rem; font-family: var(--font-heading);">Create your account to claim plan & open dashboard</h4>
+              <div class="input-group" style="margin-bottom: 14px;">
+                <label for="regName" class="input-label">Your Name</label>
+                <input type="text" id="regName" placeholder="John Doe" class="form-input" required>
+              </div>
+              <div class="input-group" style="margin-bottom: 14px;">
+                <label for="regEmail" class="input-label">Email Address</label>
+                <input type="email" id="regEmail" placeholder="you@example.com" class="form-input" required>
+              </div>
+              <div class="input-group" style="margin-bottom: 16px;">
+                <label for="regPassword" class="input-label">Choose Password</label>
+                <input type="password" id="regPassword" placeholder="Minimum 6 characters" class="form-input" required>
+              </div>
+              <div id="quizErrorMsg" style="display:none; color:#be123c; font-size:0.8rem; margin-bottom:12px; font-weight:600;"></div>
+            </div>
+
+            <div class="step-actions flex-col" style="gap: 12px; margin-top: 20px;">
+              <button class="btn btn-primary w-full" id="claimPlanBtn">Save Profile & Open Dashboard</button>
               <button class="btn btn-link prev-step-btn" data-prev="3">Adjust Details</button>
             </div>
+
           </div>
         </div>
       </div>
