@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraPet | Owner Dashboard</title>
+  <meta name="description" content="AuraPet active health telemetry and smart device dashboard.">
+  
+  <!-- Premium Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN for live vital graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Core Dashboard Stylesheet -->
+  <style>
+    :root {
+      --color-bg-primary: #FFFFFF;
+      --color-bg-secondary: #FAF9F6;
+      --color-text-primary: #171717;
+      --color-text-secondary: #5A5A5A;
+      
+      --color-accent-peach: #FFDDBF;
+      --color-accent-mint: #A8E8E2;
+      --color-accent-mint-soft: rgba(168, 232, 226, 0.15);
+      
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      
+      --radius-pill: 9999px;
+      --radius-card: 20px;
+      --radius-input: 10px;
+      
+      --shadow-premium: 0 10px 30px rgba(168, 232, 226, 0.12), 0 1px 3px rgba(23, 23, 23, 0.02);
+      --transition-fast: all 0.25s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--color-bg-secondary);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    /* Dashboard Header */
+    .db-header {
+      background-color: var(--color-bg-primary);
+      border-bottom: 1px solid rgba(23, 23, 23, 0.06);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .db-header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-family: var(--font-heading);
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--color-text-primary);
+    }
+
+    .user-greeting {
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-logout {
+      padding: 8px 18px;
+      border: 1px solid var(--color-text-primary);
+      border-radius: var(--radius-pill);
+      background: transparent;
+      color: var(--color-text-primary);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.8rem;
+      transition: var(--transition-fast);
+    }
+
+    .btn-logout:hover {
+      background-color: var(--color-text-primary);
+      color: var(--color-bg-primary);
+    }
+
+    /* Main Dashboard Layout */
+    .db-main {
+      flex-grow: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .welcome-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(23, 23, 23, 0.06);
+      padding-bottom: 24px;
+    }
+
+    .welcome-banner h2 {
+      font-size: 2rem;
+    }
+
+    .pet-badge {
+      background-color: var(--color-accent-peach);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Vitals Summary Grid */
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .vital-card {
+      background-color: var(--color-bg-primary);
+      border-radius: var(--radius-card);
+      padding: 24px;
+      border: 1px solid rgba(23, 23, 23, 0.04);
+      box-shadow: var(--shadow-premium);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .vital-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .vital-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--color-text-secondary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .vital-icon {
+      font-size: 1.25rem;
+    }
+
+    .vital-value {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .vital-status {
+      font-size: 0.75rem;
+      color: #0b7066;
+      font-weight: 500;
+    }
+
+    .vital-status.warning {
+      color: #b45309;
+    }
+
+    /* Vitals Charts Section */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 32px;
+    }
+
+    .chart-box {
+      background-color: var(--color-bg-primary);
+      border-radius: var(--radius-card);
+      padding: 30px;
+      border: 1px solid rgba(23, 23, 23, 0.04);
+      box-shadow: var(--shadow-premium);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .chart-box h3 {
+      font-size: 1.25rem;
+      border-bottom: 1px solid rgba(23, 23, 23, 0.05);
+      padding-bottom: 14px;
+    }
+
+    .chart-canvas-container {
+      position: relative;
+      height: 280px;
+      width: 100%;
+    }
+
+    /* Actions Panel */
+    .actions-box {
+      background-color: var(--color-bg-primary);
+      border-radius: var(--radius-card);
+      padding: 30px;
+      border: 1px solid rgba(23, 23, 23, 0.04);
+      box-shadow: var(--shadow-premium);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .actions-box h3 {
+      font-size: 1.25rem;
+      border-bottom: 1px solid rgba(23, 23, 23, 0.05);
+      padding-bottom: 14px;
+    }
+
+    .actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .btn-action {
+      padding: 16px 20px;
+      border: 1px solid rgba(23, 23, 23, 0.1);
+      background-color: var(--color-bg-secondary);
+      color: var(--color-text-primary);
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: var(--transition-fast);
+      text-align: left;
+    }
+
+    .btn-action:hover {
+      background-color: var(--color-accent-mint-soft);
+      border-color: var(--color-accent-mint);
+      transform: translateY(-1px);
+    }
+
+    .btn-action-primary {
+      background-color: var(--color-text-primary);
+      color: var(--color-bg-primary);
+      border-color: var(--color-text-primary);
+    }
+
+    .btn-action-primary:hover {
+      background-color: #333333;
+      border-color: #333333;
+    }
+
+    .action-icon {
+      font-size: 1.2rem;
+    }
+
+    .action-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .action-details span:last-child {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      font-weight: 400;
+    }
+
+    /* Feeding Log list */
+    .feed-log-box {
+      margin-top: 10px;
+    }
+
+    .feed-log-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .feed-log-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .feed-log-item {
+      font-size: 0.8rem;
+      padding: 8px 12px;
+      background-color: var(--color-bg-secondary);
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .alert-banner {
+      background-color: var(--color-accent-peach);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      animation: fade-in 0.3s ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive queries */
+    @media screen and (max-width: 1024px) {
+      .vitals-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media screen and (max-width: 600px) {
+      .vitals-grid {
+        grid-template-columns: 1fr;
+      }
+      .welcome-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="db-header">
+    <div class="db-header-container">
+      <a href="/" class="logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 14.5C9.5 15.5 10.5 16 12 16C13.5 16 14.5 15.5 15 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9.5" cy="10.5" r="1.5" fill="currentColor"/>
+          <circle cx="14.5" cy="10.5" r="1.5" fill="currentColor"/>
+        </svg>
+        <span>AuraPet</span>
+      </a>
+      <div class="user-greeting">
+        <span>Welcome, <strong id="greetingUserName">Owner</strong></span>
+        <button class="btn-logout" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="db-main">
+
+    <!-- Alert Status Bar -->
+    <div class="alert-banner" id="alertBanner">
+      <span id="alertMsg">Meal dispensed successfully!</span>
+      <button style="background:none; border:none; cursor:pointer; font-weight:bold;" onclick="this.parentElement.style.display='none'">✕</button>
+    </div>
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+      <div>
+        <h2 id="petGreetingTitle">Loading profile...</h2>
+        <p style="font-size: 0.9rem; color: var(--color-text-secondary); margin-top: 4px;">Collar Telemetry: Connected via Bluetooth</p>
+      </div>
+      <span class="pet-badge" id="petPlanBadge">Aura Vital</span>
+    </div>
+
+    <!-- Vitals Cards -->
+    <section class="vitals-grid">
+      <!-- Heart Rate -->
+      <div class="vital-card">
+        <div class="vital-header">
+          <span>Heart Rate</span>
+          <span class="vital-icon">❤️</span>
+        </div>
+        <div class="vital-value" id="valHeartRate">-- <span style="font-size: 1rem; font-weight: normal; color: var(--color-text-secondary);">bpm</span></div>
+        <div class="vital-status" id="statusHeartRate">Active Rest</div>
+      </div>
+
+      <!-- Activity (Steps) -->
+      <div class="vital-card">
+        <div class="vital-header">
+          <span>Daily Steps</span>
+          <span class="vital-icon">👟</span>
+        </div>
+        <div class="vital-value" id="valSteps">--</div>
+        <div class="vital-status" id="valStepsGoal">Goal: --</div>
+      </div>
+
+      <!-- Food Hopper remaining -->
+      <div class="vital-card">
+        <div class="vital-header">
+          <span>Feeder Capacity</span>
+          <span class="vital-icon">🌾</span>
+        </div>
+        <div class="vital-value" id="valFoodCapacity">-- <span style="font-size: 1rem; font-weight: normal; color: var(--color-text-secondary);">g</span></div>
+        <div class="vital-status" id="statusFoodCapacity">Tank secure</div>
+      </div>
+
+      <!-- Collar Battery -->
+      <div class="vital-card">
+        <div class="vital-header">
+          <span>Collar Battery</span>
+          <span class="vital-icon">🔋</span>
+        </div>
+        <div class="vital-value" id="valCollarBattery">-- <span style="font-size: 1rem; font-weight: normal; color: var(--color-text-secondary);">%</span></div>
+        <div class="vital-status" id="statusCollarBattery">Charge stable</div>
+      </div>
+    </section>
+
+    <!-- Visual telemetry charts + Actions layout -->
+    <div class="charts-grid">
+      <!-- Live Graphs -->
+      <div class="chart-box">
+        <h3>Dynamic Telemetry Trends</h3>
+        <div class="chart-canvas-container">
+          <canvas id="heartRateChart"></canvas>
+        </div>
+        <div class="chart-canvas-container" style="margin-top: 10px;">
+          <canvas id="stepsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Quick Remote Actions -->
+      <div class="actions-box">
+        <h3>Remote Actions</h3>
+        <div class="actions-list">
+          <button class="btn-action btn-action-primary" id="dispenseBtn">
+            <span class="action-icon">🚀</span>
+            <div class="action-details">
+              <span>Dispense Meal (100g)</span>
+              <span>Triggers active hopper motor</span>
+            </div>
+          </button>
+          
+          <button class="btn-action" onclick="alert('Dispensing training sound alert!')">
+            <span class="action-icon">🔔</span>
+            <div class="action-details">
+              <span>Sound Dinner Chime</span>
+              <span>Plays alert at the feeder bowl</span>
+            </div>
+          </button>
+
+          <button class="btn-action" onclick="alert('Collar LED locator beacon activated!')">
+            <span class="action-icon">💡</span>
+            <div class="action-details">
+              <span>Beacon Light</span>
+              <span>Flash LED locator on Vital Collar</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- Feeding Logs list -->
+        <div class="feed-log-box">
+          <h4 class="feed-log-title">Recent Feeding logs</h4>
+          <ul class="feed-log-list" id="feedLogList">
+            <li class="feed-log-item" style="color:var(--color-text-secondary); font-style:italic;">No feeds logged today yet.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Dashboard Script Logic -->
+  <script src="dashboard.js"></script>
+</body>
+</html>
