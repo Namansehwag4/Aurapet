@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: aurapet-backend
+    env: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5050
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false # User will provide their MongoDB Atlas URI in the Render dashboard
