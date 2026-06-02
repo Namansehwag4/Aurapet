@@ -5,8 +5,10 @@
   "scripts": {
     "start": "node server/server.js",
     "server": "nodemon server/server.js",
-    "client": "python3 -m http.server 8000 --directory client"
+    "client": "python3 -m http.server 8000 --directory client",
+    "deploy": "gh-pages -d client"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
 }
