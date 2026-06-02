@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Dynamic API Host Configuration (Local developer vs production URL)
   const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000/api'
+    ? 'http://localhost:5050/api'
     : 'https://aurapet.onrender.com/api'; // Replace with final deployed Render API in future
 
   // ==========================================

@@ -54,9 +54,17 @@ router.get('/:petId/history', protect, async (req, res) => {
     if (!pet) return;
 
     // Retrieve last 7 records sorted ascending by timestamp (so charts render left-to-right)
-    const logs = await Telemetry.find({ pet: petId })
+    let logs = await Telemetry.find({ pet: petId })
       .sort({ timestamp: -1 })
       .limit(7);
+
+    // Seed historical telemetry if database is empty for this pet
+    if (logs.length === 0) {
+      await getLiveTelemetry(petId, pet.type);
+      logs = await Telemetry.find({ pet: petId })
+        .sort({ timestamp: -1 })
+        .limit(7);
+    }
 
     res.status(200).json({
       success: true,
